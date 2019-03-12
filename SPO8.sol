@@ -12,10 +12,9 @@ pragma solidity >=0.4.24;
  * ╚══════╝╚═╝      ╚═════╝  ╚════╝        ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
  * ---
  * POWERED BY
- *  _  _  ___    ____  ____    __    __  __
- * ( \( )(__ )  (_  _)( ___)  /__\  (  \/  )
- *  )  (  (_ \    )(   )__)  /(__)\  )    (
- * (_)\_)(___/   (__) (____)(__)(__)(_/\/\_)
+ *  __    ___   _     ___  _____  ___     _     ___
+ * / /`  | |_) \ \_/ | |_)  | |  / / \   | |\ |  ) )
+ * \_\_, |_| \  |_|  |_|    |_|  \_\_/   |_| \| _)_)
  * Company Info at https://po8.io
  * code at https://github.com/crypn3
  */
@@ -168,16 +167,14 @@ contract SPO8 {
     Transaction[] internal specialTransactions; // An array where is used to save special transactions
     
     // Contract's constructor
-    constructor (string _name, 
-                string _symbol,
-                uint256 totalSupply_,
+    constructor (uint256 totalSupply_,
                 address _CEO, 
                 string _CEOName, 
                 address _CFO, 
                 string _CFOName,
                 address _BOD) public {
-        name = _name;
-        symbol = _symbol;
+        name = "Security PO8 Token";
+        symbol = "SPO8";
         _totalSupply = totalSupply_;
         companyName = "PO8 Ltd";
         companyTaxID = "IBC";
