@@ -53,6 +53,7 @@ contract SPO8 {
     struct Infor{
         string userName;
         string phone;
+        string certificate;
     }
     
     mapping(address => Infor) internal userInfor;
@@ -61,19 +62,19 @@ contract SPO8 {
     
     uint256 public transferLimitationTime = 31536000000; // 1 year
     
-    event AddNewUser(address indexed newUser);
-    event RemoveUser(address indexed user);
-    event UnlockUser(address indexed user);
-    event LockUser(address indexed user);
-    event SetLimitationTime(uint256 time);
-    event UnlockToken(uint256 time);
+    event NewUserAdded(address indexed newUser);
+    event UserRemoved(address indexed user);
+    event UserUnlocked(address indexed user);
+    event UserLocked(address indexed user);
+    event LimitationTimeSet(uint256 time);
+    event TokenUnlocked(uint256 time);
     /* End user */
     
     /* Sale token Contracts address */
     address[] internal saleContracts;
     
-    event AddNewSaleContract(address _saleContractAddress);
-    event RemoveSaleContract(address _saleContractAddress);
+    event NewSaleContractAdded(address _saleContractAddress);
+    event SaleContractRemoved(address _saleContractAddress);
     /* End Sale Contract */
     
     /* All props and event of SPO8 token */
@@ -227,7 +228,7 @@ contract SPO8 {
         require(balances[_from] >= _value);
         require(balances[_to].add(_value) > balances[_to]);
         require(checkWhiteList(_from));
-        require(checkWhiteList(_to));
+        //require(checkWhiteList(_to));
         require(checkLockedUser(_from) == false);
         
         if(balances[_from] < threshold || msg.sender == CEO || msg.sender == CFO || msg.sender == BOD) {
@@ -371,7 +372,7 @@ contract SPO8 {
     function addUser(address _newUser) external onlyBoss returns (bool) {
         require (!checkWhiteList(_newUser));
         whiteListUser.push(_newUser);
-        emit AddNewUser(_newUser);
+        emit NewUserAdded(_newUser);
         return true;
     }
     
@@ -383,7 +384,7 @@ contract SPO8 {
         for(uint i = 0; i < _newUsers.length; i++)
         {
             whiteListUser.push(_newUsers[i]);
-            emit AddNewUser(_newUsers[i]);
+            emit NewUserAdded(_newUsers[i]);
         }
         return true;
     }
@@ -429,7 +430,7 @@ contract SPO8 {
         delete whiteListUser[length - 1];
         whiteListUser.length--;
         
-        emit RemoveUser(_user);
+        emit UserRemoved(_user);
         return true;
     }
     
@@ -470,7 +471,7 @@ contract SPO8 {
         require(checkSaleContracts(msg.sender) || msg.sender == CEO || msg.sender == CFO);
         
         userPurchasingTime[_user] = now.mul(1000);
-        emit LockUser(_user);
+        emit UserLocked(_user);
         
         return true;
     }
@@ -481,7 +482,7 @@ contract SPO8 {
     */
     function unlockUser(address _user) external onlyBoss returns (bool) {
         userPurchasingTime[_user] = 0;
-        emit UnlockUser(_user);
+        emit UserUnlocked(_user);
         
         return true;
     }
@@ -505,7 +506,7 @@ contract SPO8 {
     */
     function setLimitationTime(uint256 _time) external onlyBoss returns (bool) {
         transferLimitationTime = _time;
-        emit SetLimitationTime(_time);
+        emit LimitationTimeSet(_time);
         
         return true;
     }
@@ -516,7 +517,7 @@ contract SPO8 {
     */
     function unlockToken() external onlyBoss returns (bool) {
         transferLimitationTime = 0;
-        emit UnlockToken(now.mul(1000)); 
+        emit TokenUnlocked(now.mul(1000)); 
         return true;
     }
     
@@ -612,7 +613,7 @@ contract SPO8 {
         
         uint256 length = saleContracts.length;
         saleContracts[length] = _newSaleContract;
-        emit AddNewSaleContract(_newSaleContract);
+        emit NewSaleContractAdded(_newSaleContract);
         
         return true;
     }
@@ -634,7 +635,7 @@ contract SPO8 {
         saleContracts[i] = saleContracts[length - 1];
         delete saleContracts[length - 1];
         saleContracts.length--;
-        emit RemoveSaleContract(_saleContract);
+        emit SaleContractRemoved(_saleContract);
         
         return true;
     }
