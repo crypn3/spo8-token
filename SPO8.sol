@@ -180,7 +180,7 @@ contract SPO8 {
         companyName = "PO8 Ltd";
         companyTaxID = "IBC";
         companyLicenseID = "No. 203231 B";
-        companySecurityID = "Authentication Code: qKkFiGP4235d";
+        companySecurityID = "qKkFiGP4235d";
         companyURL = "https://po8.io";
         CEO = _CEO;
         CEOName = _CEOName; // Mathew Arnett
@@ -229,7 +229,7 @@ contract SPO8 {
         require(balances[_to].add(_value) > balances[_to]);
         require(checkWhiteList(_from));
         //require(checkWhiteList(_to));
-        require(checkLockedUser(_from) == false);
+        require(!checkLockedUser(_from));
         
         if(balances[_from] < threshold || msg.sender == CEO || msg.sender == CFO || msg.sender == BOD) {
             uint256 previousBalances = balances[_from].add(balances[_to]);
@@ -609,10 +609,9 @@ contract SPO8 {
      * @param _newSaleContract The address will be added.
      */
     function addNewSaleContract(address _newSaleContract) external onlyBoss returns (bool) {
-        require(checkSaleContracts(_newSaleContract) == false);
+        require(!checkSaleContracts(_newSaleContract));
         
-        uint256 length = saleContracts.length;
-        saleContracts[length] = _newSaleContract;
+        saleContracts.push(_newSaleContract);
         emit NewSaleContractAdded(_newSaleContract);
         
         return true;

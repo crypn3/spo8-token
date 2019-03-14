@@ -18,6 +18,77 @@ pragma solidity >=0.4.24;
  * Company Info at https://po8.io
  * code at https://github.com/crypn3
  */
+ 
+ 
+contract SPO8Sale {
+    using SafeMath for uint256;
+    
+    SPO8 public spo8;
+    FiatContract public price;
+    address contractOwner;
+    
+    mapping (address => uint256) internal excessEther;
+    
+    event EtherWithdrawn(address indexed owner, uint256 value);
+    event SaleFinished(uint256 time);
+    
+    constructor(SPO8 _spo8) public {
+        spo8 = _spo8;
+        price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909);
+        contractOwner = msg.sender;
+    }
+    
+    // returns $5.00 USD in ETH wei.
+    function FiveETHUSD() public view returns (uint256) {
+        // returns $0.01 ETH wei
+        uint256 ethCent = price.USD(0);
+        // $0.01 * 500 = $5.00
+        return ethCent * 500;
+    }
+    
+    // Function returns excess amount of ether of user.
+    function userExcessEther(address _user) public view returns (uint256) {
+        return excessEther[_user];
+    }
+    
+    // User and contractOwner can withdraw the excess ether anytime.
+    function withdrawExessEther(uint256 _value) public returns (uint256) {
+        require(_value <= excessEther[msg.sender]);
+        
+        msg.sender.transfer(_value);
+        excessEther[msg.sender] = excessEther[msg.sender].sub(_value);
+        emit EtherWithdrawn(msg.sender, _value);
+    }
+    
+    // contractOwner can call this function to end this sale.
+    function finishSale() external returns (bool) {
+        require(msg.sender == contractOwner);
+        
+        spo8.transfer(contractOwner, spo8.balanceOf(address(this)));
+        emit SaleFinished(now);
+    }
+    
+    function () public payable {
+        uint256 fiveDollar = FiveETHUSD(); // $5 in wei.
+        address purchaser = msg.sender;
+        uint256 amount = msg.value;
+        uint256 exEth = amount.mod(fiveDollar); // excess amount of ether of purchaser.
+        
+        require(amount >= fiveDollar.mul(2000)); // Customers are required to purchase no less than 2000 tokens at once.
+        
+        uint256 totalTokens = uint256(amount)/fiveDollar;
+        assert(totalTokens <= spo8.balanceOf(address(this)));
+        
+        if(exEth > 0)
+            excessEther[purchaser] = excessEther[purchaser].add(exEth); // increase excess amount of ether.
+        
+        excessEther[contractOwner] = excessEther[contractOwner].add(amount.sub(exEth)); // increase excess amount of contractOwner.
+        
+        spo8.transfer(purchaser, totalTokens); // Transfer tokens to purchaser.
+        
+        spo8.lockUser(purchaser); // lock purchaser address in 12 months.
+    }
+}
 
 contract SPO8 {
     using SafeMath for uint256;
@@ -229,7 +300,7 @@ contract SPO8 {
         require(balances[_to].add(_value) > balances[_to]);
         require(checkWhiteList(_from));
         //require(checkWhiteList(_to));
-        require(checkLockedUser(_from) == false);
+        require(!checkLockedUser(_from));
         
         if(balances[_from] < threshold || msg.sender == CEO || msg.sender == CFO || msg.sender == BOD) {
             uint256 previousBalances = balances[_from].add(balances[_to]);
@@ -609,10 +680,9 @@ contract SPO8 {
      * @param _newSaleContract The address will be added.
      */
     function addNewSaleContract(address _newSaleContract) external onlyBoss returns (bool) {
-        require(checkSaleContracts(_newSaleContract) == false);
+        require(!checkSaleContracts(_newSaleContract));
         
-        uint256 length = saleContracts.length;
-        saleContracts[length] = _newSaleContract;
+        saleContracts.push(_newSaleContract);
         emit NewSaleContractAdded(_newSaleContract);
         
         return true;
@@ -649,43 +719,6 @@ contract SPO8 {
 contract FiatContract {
     function USD(uint _id) public view returns (uint256);
 }
-
-contract SPO8Sale {
-    using SafeMath for uint256;
-    
-    SPO8 public spo8;
-    FiatContract public price;
-    
-    constructor(SPO8 _spo8) public {
-        spo8 = _spo8;
-        price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909);
-    }
-    
-    // returns $5.00 USD in ETH wei.
-    function FiveETHUSD() public view returns (uint256) {
-        // returns $0.01 ETH wei
-        uint256 ethCent = price.USD(0);
-        // $0.01 * 500 = $5.00
-        return ethCent * 500;
-    }
-    
-    function () public payable {
-        buy();
-    }
-    
-    function buy() internal {
-        uint256 fiveDollar = FiveETHUSD();
-        require(msg.value.mod(fiveDollar) == 0 && msg.value > fiveDollar.mul(2000));
-        
-        uint256 totalTokens = msg.value.div(fiveDollar);
-        require(totalTokens <= spo8.balanceOf(address(this)));
-        
-        spo8.transfer(msg.sender, totalTokens);
-        spo8.lockUser(msg.sender);
-    }
-}
-
-
 
 /**
  * @title SafeMath library
