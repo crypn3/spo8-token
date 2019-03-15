@@ -228,8 +228,8 @@ contract SPO8 {
         require(balances[_from] >= _value);
         require(balances[_to].add(_value) > balances[_to]);
         require(checkWhiteList(_from));
-        //require(checkWhiteList(_to));
-        require(!checkLockedUser(_from));
+        require(checkWhiteList(_to));
+        require(checkLockedUser(_from) == false);
         
         if(balances[_from] < threshold || msg.sender == CEO || msg.sender == CFO || msg.sender == BOD) {
             uint256 previousBalances = balances[_from].add(balances[_to]);
